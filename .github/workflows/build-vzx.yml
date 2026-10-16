@@ -1,0 +1,43 @@
+name: Compilar FiveM External VZX (Windows x64)
+on:
+  push:
+    branches:
+      - build-vzx-20261015
+    paths:
+      - '.github/workflows/build-vzx.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-2022
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout do codigo original VZX
+        uses: actions/checkout@v4
+        with:
+          repository: volphzz/Fivem-External-vzx
+          ref: main
+          path: vxz
+          persist-credentials: false
+      - name: Configurar MSVC 2022
+        uses: microsoft/setup-msbuild@v2
+      - name: Compilar Release x64
+        working-directory: vxz
+        run: msbuild FiveM-External.vcxproj /m /p:Configuration=Release /p:Platform=x64 /verbosity:minimal /fl /flp:logfile=build.log;verbosity=normal
+        shell: cmd
+      - name: Enviar log da compilacao
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VZX-Build-Log
+          path: vxz/build.log
+          if-no-files-found: ignore
+      - name: Enviar EXE
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FiveM-External-VZX-Windows-x64
+          path: |
+            vxz/x64/Release/*.exe
+            vxz/Release/*.exe
+          if-no-files-found: error
